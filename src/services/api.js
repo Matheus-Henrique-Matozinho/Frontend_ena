@@ -10,9 +10,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
  */
 async function handleResponse(response) {
   if (!response.ok) {
-    // Tenta pegar uma mensagem de erro do corpo da resposta, se houver
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'A resposta da rede não foi OK');
+    // Tenta extrair uma mensagem de erro do corpo da resposta da API
+    const errorBody = await response.json().catch(() => ({ message: 'Erro HTTP desconhecido' }));
+    // Lança um erro com a mensagem do backend ou uma mensagem padrão
+    throw new Error(errorBody.message || `Erro ${response.status}: ${response.statusText}`);
   }
   return response.json();
 }
