@@ -9,17 +9,31 @@ export const useMonitoringStore = defineStore('monitoring', {
       oculos: false,
       luva: false,
     },
+    // NOVO ESTADO: Armazena as classes que devem ser exibidas no painel
+    monitoredClasses: [],
     streamError: false,
     isLoading: true,
     lastErrorMessage: null,
-    // NOVO: O estado do painel agora vive aqui
     isControlPanelOpen: false, 
   }),
 
   actions: {
-    // NOVO: Ação para abrir/fechar o painel
     toggleControlPanel() {
       this.isControlPanelOpen = !this.isControlPanelOpen;
+    },
+
+    // NOVA AÇÃO: Busca e atualiza as classes selecionadas no backend
+    async fetchMonitoredClasses() {
+      try {
+      const data = await api.getSelectedClasses();
+
+      // LOG 2: O que a API nos diz que são as classes monitoradas?
+      console.log('[Store] Dados recebidos de getSelectedClasses:', data);
+
+      this.monitoredClasses = data.selected_classes || [];
+    } catch (err) {
+      console.error('Falha ao buscar classes monitoradas:', err);
+    }
     },
 
     async fetchStatus() {
@@ -44,7 +58,6 @@ export const useMonitoringStore = defineStore('monitoring', {
 
     startPolling() {
       this.stopPolling();
-      // O polling agora é incondicional, já que removemos o switch
       this.fetchStatus();
       this.intervalId = setInterval(() => this.fetchStatus(), 1500);
     },
@@ -62,4 +75,3 @@ export const useMonitoringStore = defineStore('monitoring', {
     },
   },
 });
-

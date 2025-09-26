@@ -11,17 +11,37 @@
           {{ error }}
         </v-alert>
         
-        <div v-else class="checkbox-group flex-grow-1">
-            <v-checkbox
+        <v-list 
+          v-else 
+          v-model:selected="selected" 
+          select-strategy="multiple"
+          class="flex-grow-1"
+          bg-color="transparent"
+        >
+            <v-list-item
                 v-for="cls in availableClasses"
                 :key="cls"
-                v-model="selected"
-                :label="cls"
                 :value="cls"
-                density="compact"
-                hide-details
-            ></v-checkbox>
-        </div>
+                class="mb-2"
+                rounded="lg"
+            >
+                <template v-slot:prepend>
+                  <v-icon :icon="getClassIcon(cls)" class="mr-3"></v-icon>
+                </template>
+
+                <v-list-item-title class="font-weight-medium text-capitalize">
+                  {{ cls.replace('_', ' ') }}
+                </v-list-item-title>
+
+                <template v-slot:append="{ isSelected }">
+                  <v-icon
+                    v-if="isSelected"
+                    color="primary"
+                    icon="mdi-check-circle"
+                  ></v-icon>
+                </template>
+                </v-list-item>
+        </v-list>
 
         <v-btn 
           @click="submitSelection" 
@@ -38,61 +58,75 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue'
-import { api } from '@/services/api.js'
+import { ref, onMounted } from 'vue';
+import { api } from '@/services/api.js';
+import { useMonitoringStore } from '@/stores/monitoring.js';
 
-const availableClasses = ref([])
-const selected = ref([])
-const loading = ref(true)
-const error = ref(null)
-const isSubmitting = ref(false) // <-- Para o estado de loading do botão
+const store = useMonitoringStore();
 
-const emit = defineEmits(['classes-set']) // <-- Definimos o evento que será emitido
+const availableClasses = ref([]);
+const selected = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const isSubmitting = ref(false);
+
+const emit = defineEmits(['classes-set']);
+
+function getClassIcon(className) {
+  const icons = {
+    capacete: 'mdi-hard-hat',
+    oculos: 'mdi-sunglasses',
+    luva: 'mdi-hand-back-right-outline',
+    person: 'mdi-account',
+  };
+  return icons[className] || 'mdi-tag-outline';
+}
 
 async function fetchClasses() {
     try {
-        loading.value = true
-        error.value = null
+        loading.value = true;
+        error.value = null;
         
         const [availableData, selectedData] = await Promise.all([
             api.getClasses(),
             api.getSelectedClasses()
         ]);
 
-        availableClasses.value = availableData.available_classes || []
-        // LÓGICA CORRIGIDA: Usa os dados do backend para o valor inicial
-        selected.value = selectedData.selected_classes || [] 
+        availableClasses.value = availableData.available_classes || [];
+        selected.value = selectedData.selected_classes || [];
         
     } catch (err) {
-        console.error(err)
-        error.value = 'Falha ao carregar dados das classes.'
+        console.error(err);
+        error.value = 'Falha ao carregar dados das classes.';
     } finally {
-        loading.value = false
+        loading.value = false;
     }
 }
 
 async function submitSelection() {
-    isSubmitting.value = true
-    error.value = null
+    isSubmitting.value = true;
+    error.value = null;
     try {
-        const data = await api.setClasses(selected.value)
-        console.log('Target classes set:', data)
-        emit('classes-set') // <-- EMITIR EVENTO EM CASO DE SUCESSO
+        await api.setClasses(selected.value);
+        emit('classes-set');
+        
+        await store.fetchMonitoredClasses();
+
     } catch (err) {
-        console.error('Failed to set target classes:', err)
-        error.value = 'Falha ao aplicar as classes.'
+        console.error('Failed to set target classes:', err);
+        error.value = 'Falha ao aplicar as classes.';
     } finally {
-        isSubmitting.value = false
+        isSubmitting.value = false;
     }
 }
 
-onMounted(fetchClasses)
+onMounted(fetchClasses);
 </script>
 
 <style scoped>
 .checkbox-group {
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Adiciona scroll se a lista for muito grande */
+    overflow-y: auto;
 }
 </style>

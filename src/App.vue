@@ -2,7 +2,7 @@
   <v-app>
     <!-- Barra Superior -->
     <v-app-bar app elevation="2" color="surface">
-      <v-img src="/logo.png" max-height="50" max-width="50" contain class="ml-3 mr-4"></v-img>
+      <v-img src="/logo.png" max-height="70" max-width="70" contain class="ml-3 mr-4"></v-img>
       <v-app-bar-title class="font-weight-bold text-h6">
         KEEPER <span class="text-primary">IA</span>
       </v-app-bar-title>

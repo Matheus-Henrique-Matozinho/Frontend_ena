@@ -2,8 +2,7 @@
   <v-card variant="outlined" class="fill-height epi-card">
     <v-card-title>Análise de EPIs em Tempo Real</v-card-title>
     <v-card-text class="epi-container">
-      <div v-for="epi in epiList" :key="epi.key" class="epi-item d-flex align-center">
-        <!-- Coluna da Imagem -->
+      <div v-for="epi in monitoredEpiList" :key="epi.key" class="epi-item d-flex align-center">
         <div class="image-container mr-4">
           <v-img
             :src="getImagePath(epi.key)"
@@ -15,8 +14,6 @@
             contain
           ></v-img>
         </div>
-
-        <!-- Coluna de Informação -->
         <div class="flex-grow-1">
           <div class="font-weight-bold">{{ epi.name }}</div>
           <div
@@ -26,13 +23,16 @@
             {{ store.epiStatus[epi.key] ? 'DETECTADO' : 'NÃO DETECTADO' }}
           </div>
         </div>
-
-        <!-- Indicador Visual -->
         <div class="status-indicator" :class="store.epiStatus[epi.key] ? 'bg-success' : 'bg-error'"></div>
       </div>
+
+      <div v-if="monitoredEpiList.length === 0" class="text-center text-medium-emphasis pa-4">
+        <v-icon size="large">mdi-checkbox-multiple-blank-outline</v-icon>
+        <p class="mt-2 text-caption">Nenhum EPI selecionado para monitoramento.</p>
+      </div>
+
     </v-card-text>
 
-    <!-- Ícone Vision Keeper no canto inferior direito -->
     <v-img
       src="/images/epi/logo_vision_keeper.png"
       alt="Vision Keeper"
@@ -45,18 +45,34 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'; // Importar 'computed'
 import { useMonitoringStore } from '@/stores/monitoring.js';
 
 const store = useMonitoringStore();
 
-// Lista de EPIs para facilitar a iteração no template
-const epiList = [
-  { key: 'capacete', name: 'Capacete de Segurança' },
-  { key: 'oculos', name: 'Óculos de Proteção' },
-  { key: 'luva', name: 'Luvas de Segurança' }
-];
+// Um mapa com as informações de todos os EPIs possíveis
+const ALL_EPIS = {
+  capacete: { name: 'Capacete de Segurança' },
+  oculos: { name: 'Óculos de Proteção' },
+  luva: { name: 'Luvas de Segurança' }
+};
 
-// Função dinâmica para obter o caminho da imagem com os nomes corretos
+// CRIAR uma propriedade computada que filtra os EPIs com base na store
+const monitoredEpiList = computed(() => {
+  const result = store.monitoredClasses
+    .filter(key => ALL_EPIS[key])
+    .map(key => ({
+      key: key,
+      name: ALL_EPIS[key].name
+    }));
+
+  // LOG 3: Qual é a lista final que o componente vai renderizar?
+  console.log('[EpiStatusPanel] Lista de EPIs a ser renderizada:', result);
+
+  return result;
+});
+
+// A função 'getImagePath' continua a mesma
 const getImagePath = (key) => {
   const isDetected = store.epiStatus[key];
 
@@ -74,9 +90,8 @@ const getImagePath = (key) => {
 .epi-container {
   display: flex;
   flex-direction: column;
-  gap: 45px; /* Espaçamento entre os blocos */
+  gap: 45px;
 }
-
 .epi-item {
   position: relative;
   overflow: hidden;
@@ -85,15 +100,12 @@ const getImagePath = (key) => {
   padding: 12px;
   transition: all 0.3s ease-in-out;
 }
-
 .epi-image {
   transition: filter 0.3s ease-in-out;
 }
-
 .epi-not-detected {
   filter: grayscale(100%) opacity(60%);
 }
-
 .status-indicator {
   position: absolute;
   top: 0;
@@ -102,13 +114,9 @@ const getImagePath = (key) => {
   height: 100%;
   transition: background-color 0.3s ease-in-out;
 }
-
-/* Estilo do card para posicionar o logo */
 .epi-card {
   position: relative;
 }
-
-/* Logo Vision Keeper no canto inferior direito */
 .vision-logo {
   position: absolute;
   bottom: 8px;
@@ -116,7 +124,6 @@ const getImagePath = (key) => {
   opacity: 0.8;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
-
 .vision-logo:hover {
   transform: scale(1.1);
   opacity: 1;
