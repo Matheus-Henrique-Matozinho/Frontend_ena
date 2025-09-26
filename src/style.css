@@ -4,4 +4,10 @@ html, body, #app {
     width: 100%;
     margin: 0;
     padding: 0;
+    background-color: #111827; /* Garante que a cor de fundo seja consistente */
+}
+
+/* Aplica a nova fonte a toda a aplicação Vuetify */
+.v-application {
+    font-family: 'Inter', sans-serif !important;
 }
